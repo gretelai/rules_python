@@ -89,9 +89,9 @@ def compile_pip_requirements(
 
     timeout = kwargs.pop("timeout", "short")
 
-    py_test(
-        name = name + "_test",
-        timeout = timeout,
-        # kwargs could contain test-specific attributes like size or timeout
-        **dict(attrs, **kwargs)
-    )
+    # py_test(
+    #     name = name + "_test",
+    #     timeout = timeout,
+    #     # kwargs could contain test-specific attributes like size or timeout
+    #     **dict(attrs, **kwargs)
+    # )
