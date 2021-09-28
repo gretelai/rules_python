@@ -125,6 +125,9 @@ def _pip_repository_impl(rctx):
             str(rctx.attr.timeout),
         ]
 
+        if  rctx.attr.platform:
+            args += ["--platform", rctx.attr.platform]
+
         if rctx.attr.python_interpreter:
             args += ["--python_interpreter", rctx.attr.python_interpreter]
         if rctx.attr.python_interpreter_target:
@@ -231,6 +234,7 @@ of 'requirements' no resolve will take place and pip_repository will create indi
 wheels are fetched/built only for the targets specified by 'build/run/test'.
 """,
     ),
+    "platform": attr.string(mandatory=False),
 }
 
 pip_repository_attrs.update(**common_attrs)
@@ -318,6 +322,7 @@ whl_library_attrs = {
         mandatory = True,
         doc = "Python requirement string describing the package to make available",
     ),
+    "platform": attr.string(mandatory=False)
 }
 
 whl_library_attrs.update(**common_attrs)

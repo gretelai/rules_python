@@ -4,6 +4,7 @@ import textwrap
 import json
 from typing import Iterable, List, Dict, Set, Optional
 import shutil
+import tarfile
 from pathlib import Path
 
 from python.pip_install.extract_wheels.lib import namespace_pkgs, wheel, purelib
@@ -381,3 +382,43 @@ def extract_wheel(
         os.remove(whl.path)
         return f"//{directory}"
     return None
+
+
+def extract_source(source_dist: str) -> Optional[str]:
+    """Extracts source dist into given directory and creates py_library and filegroup targets.
+
+    Returns:
+        The Bazel label for the extracted wheel, in the form '//path/to/wheel'.
+    """
+    def _members(tf):
+        for member in tf.getmembers():
+            dir_components = member.path.split("/")
+            if len(dir_components) > 2:
+                new_path = "/".join(dir_components[1:])
+                if new_path.startswith("test"):
+                    continue
+                member.path = new_path
+                yield member
+
+    with tarfile.open(source_dist, "r:gz") as tf:
+        tf.extractall(members=_members(tf))
+
+    build_file_contents = textwrap.dedent(
+        """\
+        load("@rules_python//python:defs.bzl", "py_library")
+
+        package(default_visibility = ["//visibility:public"])
+
+        py_library(
+            name = "pkg",
+            srcs = glob(["**/*.py"], exclude=["tests/**", "*/tests/**"]),
+            data = glob(["**/*"], exclude=["**/*.py", "**/* *", "BUILD", "WORKSPACE"]),
+            # This makes this directory a top-level in the python import
+            # search path for anything that depends on this.
+            imports = ["."],
+        )
+        """
+    )
+
+    with open("BUILD.bazel", "w+") as build_file:
+        build_file.write(build_file_contents)

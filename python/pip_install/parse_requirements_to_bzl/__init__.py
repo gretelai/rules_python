@@ -159,6 +159,7 @@ If set, it will take precedence over python_interpreter.",
         required=True,
         help="timeout to use for pip operation.",
     )
+    parser.add_argument("--platform", default=None, required=False)
     arguments.parse_common_args(parser)
     args = parser.parse_args()
 
