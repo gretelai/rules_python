@@ -63,6 +63,7 @@ def main() -> None:
 
     patterns = ["*.whl", "*.tar.gz"]
 
+    dist = None
     for pattern in patterns:
         try:
             dist = next(iter(glob.glob(pattern)))
@@ -82,4 +83,7 @@ def main() -> None:
             incremental_repo_prefix=bazel.whl_library_repo_prefix(args.repo)
         )
     if dist.endswith(".tar.gz"):
-        bazel.extract_source(dist)
+        bazel.extract_source(
+            dist,
+            incremental_repo_prefix=bazel.whl_library_repo_prefix(args.repo)
+        )

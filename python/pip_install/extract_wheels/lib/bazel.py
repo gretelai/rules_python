@@ -4,6 +4,8 @@ import os
 import shutil
 import tarfile
 import textwrap
+import pkg_resources
+from distutils.core import run_setup
 
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Set
@@ -384,7 +386,10 @@ def extract_wheel(
     return None
 
 
-def extract_source(source_dist: str) -> Optional[str]:
+def extract_source(
+    source_dist: str,
+    incremental_repo_prefix: str
+) -> Optional[str]:
     """Extracts source dist into given directory and creates py_library and filegroup targets.
 
     Returns:
@@ -393,17 +398,38 @@ def extract_source(source_dist: str) -> Optional[str]:
     def _members(tf):
         for member in tf.getmembers():
             dir_components = member.path.split("/")
-            if len(dir_components) > 2:
-                new_path = "/".join(dir_components[1:])
-                if new_path.startswith("test"):
-                    continue
-                member.path = new_path
-                yield member
+            new_path = "/".join(dir_components[1:])
+            if new_path.startswith("test"):
+                continue
+            member.path = new_path
+            yield member
 
     with tarfile.open(source_dist, "r:gz") as tf:
         tf.extractall(members=_members(tf))
 
-    # todo(dn): need to extract pkg deps
+    result = run_setup("./setup.py", stop_after="init")
+
+    # this parse out any custom package directories such as src/
+    # if there is a custom package directory, it needs to be added
+    # to the imports attribute. if no package directories are found
+    # we can assume the root directory should be used.
+    imports = []
+    if result.package_dir:
+        for k in result.package_dir.values():
+            imports.append(k)
+    if len(imports) == 0:
+        imports.append(".")
+    import_str = ",".join(['"{}"'.format(i) for i in imports])
+
+    # extract package dependencies
+    deps = []
+    if hasattr(result, "install_requires"):
+        for r in result.install_requires:
+            for d in pkg_resources.parse_requirements(r):
+                pkg_name = sanitised_repo_library_label(d.name, repo_prefix=incremental_repo_prefix)
+                deps.append(pkg_name)
+    deps_str = ",".join(deps)
+
     build_file_contents = textwrap.dedent(
         """\
         load("@rules_python//python:defs.bzl", "py_library")
@@ -412,13 +438,17 @@ def extract_source(source_dist: str) -> Optional[str]:
 
         py_library(
             name = "pkg",
-            srcs = glob(["**/*.py"], exclude=["tests/**", "*/tests/**"]),
+            srcs = glob(["**/*.py"], exclude=["tests/**", "*/tests/**", "setup.py"]),
             data = glob(["**/*"], exclude=["**/*.py", "**/* *", "BUILD", "WORKSPACE"]),
+            deps = [{deps}],
             # This makes this directory a top-level in the python import
             # search path for anything that depends on this.
-            imports = ["."],
+            imports = [{imports}],
         )
-        """
+        """.format(
+            imports=import_str,
+            deps=deps_str
+        )
     )
 
     with open("BUILD.bazel", "w+") as build_file:
