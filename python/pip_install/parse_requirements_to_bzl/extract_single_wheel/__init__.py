@@ -21,7 +21,7 @@ def main() -> None:
         required=True,
         help="A single PEP508 requirement specifier string.",
     )
-    parser.add_argument("--platform")
+    parser.add_argument("--platform", action="store")
     arguments.parse_common_args(parser)
     args = parser.parse_args()
     deserialized_args = dict(vars(args))
