@@ -25,6 +25,9 @@ def _whl_impl(repository_ctx):
         repository_ctx.attr.requirements,
     ]
 
+    if repository_ctx.attr.platform:
+        args += ["--platform", repository_ctx.attr.platform]
+
     if repository_ctx.attr.extras:
         args += [
             "--extras=%s" % extra
@@ -61,6 +64,7 @@ convention](https://www.python.org/dev/peps/pep-0427/#file-name-convention)).
             default = Label("//tools:whltool.par"),
             cfg = "host",
         ),
+        "platform": attr.string()
     },
     implementation = _whl_impl,
     doc = """A rule for importing `.whl` dependencies into Bazel.

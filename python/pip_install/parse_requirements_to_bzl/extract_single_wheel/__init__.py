@@ -21,6 +21,7 @@ def main() -> None:
         required=True,
         help="A single PEP508 requirement specifier string.",
     )
+    parser.add_argument("--platform", action="store")
     arguments.parse_common_args(parser)
     args = parser.parse_args()
     deserialized_args = dict(vars(args))
@@ -28,12 +29,12 @@ def main() -> None:
 
     configure_reproducible_wheels()
 
-    pip_args = (
-        [sys.executable, "-m", "pip"] +
-        (["--isolated"] if args.isolated else []) + 
-        ["wheel", "--no-deps"] +
-        deserialized_args["extra_pip_args"]
-    )
+    pip_args = [sys.executable, "-m", "pip", "--isolated", "download"]
+
+    if args.platform:
+        pip_args.extend(["--platform", args.platform])
+
+    pip_args.extend(["--no-deps"] + deserialized_args["extra_pip_args"])
 
     requirement_file = NamedTemporaryFile(mode='wb', delete=False)
     try:
@@ -60,12 +61,29 @@ def main() -> None:
     name, extras_for_pkg = requirements._parse_requirement_for_extra(args.requirement)
     extras = {name: extras_for_pkg} if extras_for_pkg and name else dict()
 
-    whl = next(iter(glob.glob("*.whl")))
-    bazel.extract_wheel(
-        whl,
-        extras,
-        deserialized_args["pip_data_exclude"],
-        args.enable_implicit_namespace_pkgs,
-        incremental=True,
-        incremental_repo_prefix=bazel.whl_library_repo_prefix(args.repo)
-    )
+    patterns = ["*.whl", "*.tar.gz"]
+
+    dist = None
+    for pattern in patterns:
+        try:
+            dist = next(iter(glob.glob(pattern)))
+        except StopIteration:
+            pass
+
+    if not dist:
+        raise Exception("Could find dist for")
+
+    if dist.endswith(".whl"):
+        bazel.extract_wheel(
+            dist,
+            extras,
+            deserialized_args["pip_data_exclude"],
+            args.enable_implicit_namespace_pkgs,
+            incremental=True,
+            incremental_repo_prefix=bazel.whl_library_repo_prefix(args.repo)
+        )
+    if dist.endswith(".tar.gz"):
+        bazel.extract_source(
+            dist,
+            incremental_repo_prefix=bazel.whl_library_repo_prefix(args.repo)
+        )
