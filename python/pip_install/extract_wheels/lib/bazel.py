@@ -19,7 +19,9 @@ DIST_INFO_LABEL = "dist_info"
 WHEEL_ENTRY_POINT_PREFIX = "rules_python_wheel_entry_point"
 
 
-def generate_entry_point_contents(entry_point: str, shebang: str = "#!/usr/bin/env python3") -> str:
+def generate_entry_point_contents(
+    entry_point: str, shebang: str = "#!/usr/bin/env python3"
+) -> str:
     """Generate the contents of an entry point script.
 
     Args:
@@ -32,16 +34,16 @@ def generate_entry_point_contents(entry_point: str, shebang: str = "#!/usr/bin/e
         str: A string of python code.
     """
     module, method = entry_point.split(":", 1)
-    return textwrap.dedent("""\
+    return textwrap.dedent(
+        """\
         {shebang}
         if __name__ == "__main__":
             from {module} import {method}
             {method}()
         """.format(
-        shebang=shebang,
-        module=module,
-        method=method
-    ))
+            shebang=shebang, module=module, method=method
+        )
+    )
 
 
 def generate_entry_point_rule(script: str, pkg: str) -> str:
@@ -61,7 +63,8 @@ def generate_entry_point_rule(script: str, pkg: str) -> str:
         str: A `py_binary` instantiation.
     """
     name = os.path.splitext(script)[0]
-    return textwrap.dedent("""\
+    return textwrap.dedent(
+        """\
         py_binary(
             name = "{name}",
             srcs = ["{src}"],
@@ -71,10 +74,9 @@ def generate_entry_point_rule(script: str, pkg: str) -> str:
             deps = ["{pkg}"],
         )
         """.format(
-        name=name,
-        src=str(script).replace("\\", "/"),
-        pkg=pkg
-    ))
+            name=name, src=str(script).replace("\\", "/"), pkg=pkg
+        )
+    )
 
 
 def generate_build_file_contents(
@@ -111,8 +113,10 @@ def generate_build_file_contents(
         "WORKSPACE",
     ] + pip_data_exclude
 
-    return "\n".join([textwrap.dedent(
-        """\
+    return "\n".join(
+        [
+            textwrap.dedent(
+                """\
         load("@rules_python//python:defs.bzl", "py_library", "py_binary")
 
         package(default_visibility = ["//visibility:public"])
@@ -152,16 +156,19 @@ def generate_build_file_contents(
             tags = [{tags}],
         )
         """.format(
-            name=name,
-            dependencies=",".join(dependencies),
-            data_exclude=json.dumps(data_exclude),
-            whl_file_label=WHEEL_FILE_LABEL,
-            whl_file_deps=",".join(whl_file_deps),
-            tags = ",".join(["\"%s\"" % t for t in tags]),
-            data_label=DATA_LABEL,
-            dist_info_label=DIST_INFO_LABEL,
-            entry_point_prefix=WHEEL_ENTRY_POINT_PREFIX,
-        ))] + additional_targets
+                    name=name,
+                    dependencies=",".join(dependencies),
+                    data_exclude=json.dumps(data_exclude),
+                    whl_file_label=WHEEL_FILE_LABEL,
+                    whl_file_deps=",".join(whl_file_deps),
+                    tags=",".join(['"%s"' % t for t in tags]),
+                    data_label=DATA_LABEL,
+                    dist_info_label=DIST_INFO_LABEL,
+                    entry_point_prefix=WHEEL_ENTRY_POINT_PREFIX,
+                )
+            )
+        ]
+        + additional_targets
     )
 
 
@@ -227,8 +234,7 @@ DEFAULT_PACKAGE_PREFIX = "pypi__"
 
 def whl_library_repo_prefix(parent_repo: str) -> str:
     return "{parent}_{default_package_prefix}".format(
-        parent=parent_repo,
-        default_package_prefix=DEFAULT_PACKAGE_PREFIX
+        parent=parent_repo, default_package_prefix=DEFAULT_PACKAGE_PREFIX
     )
 
 
@@ -268,7 +274,8 @@ def setup_namespace_pkg_compatibility(wheel_dir: str) -> None:
     """
 
     namespace_pkg_dirs = namespace_pkgs.implicit_namespace_packages(
-        wheel_dir, ignored_dirnames=["%s/bin" % wheel_dir],
+        wheel_dir,
+        ignored_dirnames=["%s/bin" % wheel_dir],
     )
 
     for ns_pkg_dir in namespace_pkg_dirs:
@@ -288,11 +295,15 @@ def _whl_name_to_repo_root(whl_name: str, repo_prefix: str) -> str:
 
 
 def sanitised_repo_library_label(whl_name: str, repo_prefix: str) -> str:
-    return '"{}:{}"'.format(_whl_name_to_repo_root(whl_name, repo_prefix), PY_LIBRARY_LABEL)
+    return '"{}:{}"'.format(
+        _whl_name_to_repo_root(whl_name, repo_prefix), PY_LIBRARY_LABEL
+    )
 
 
 def sanitised_repo_file_label(whl_name: str, repo_prefix: str) -> str:
-    return '"{}:{}"'.format(_whl_name_to_repo_root(whl_name, repo_prefix), WHEEL_FILE_LABEL)
+    return '"{}:{}"'.format(
+        _whl_name_to_repo_root(whl_name, repo_prefix), WHEEL_FILE_LABEL
+    )
 
 
 def extract_wheel(
@@ -342,20 +353,20 @@ def extract_wheel(
     if incremental:
         # check for mypy Optional validity
         if incremental_repo_prefix is None:
-            raise TypeError("incremental_repo_prefix arguement cannot be None if incremental == True")
+            raise TypeError(
+                "incremental_repo_prefix arguement cannot be None if incremental == True"
+            )
         sanitised_dependencies = [
-            sanitised_repo_library_label(d, repo_prefix=incremental_repo_prefix) for d in whl_deps
+            sanitised_repo_library_label(d, repo_prefix=incremental_repo_prefix)
+            for d in whl_deps
         ]
         sanitised_wheel_file_dependencies = [
-            sanitised_repo_file_label(d, repo_prefix=incremental_repo_prefix) for d in whl_deps
+            sanitised_repo_file_label(d, repo_prefix=incremental_repo_prefix)
+            for d in whl_deps
         ]
     else:
-        sanitised_dependencies = [
-            sanitised_library_label(d) for d in whl_deps
-        ]
-        sanitised_wheel_file_dependencies = [
-            sanitised_file_label(d) for d in whl_deps
-        ]
+        sanitised_dependencies = [sanitised_library_label(d) for d in whl_deps]
+        sanitised_wheel_file_dependencies = [sanitised_file_label(d) for d in whl_deps]
 
     library_name = PY_LIBRARY_LABEL if incremental else sanitise_name(whl.name)
 
@@ -363,11 +374,15 @@ def extract_wheel(
     entry_points = []
     for name, entry_point in sorted(whl.entry_points().items()):
         entry_point_script = f"{WHEEL_ENTRY_POINT_PREFIX}_{name}.py"
-        (directory_path / entry_point_script).write_text(generate_entry_point_contents(entry_point))
-        entry_points.append(generate_entry_point_rule(
-            entry_point_script,
-            library_name,
-        ))
+        (directory_path / entry_point_script).write_text(
+            generate_entry_point_contents(entry_point)
+        )
+        entry_points.append(
+            generate_entry_point_rule(
+                entry_point_script,
+                library_name,
+            )
+        )
 
     with open(os.path.join(directory, "BUILD.bazel"), "w") as build_file:
         contents = generate_build_file_contents(
@@ -386,18 +401,18 @@ def extract_wheel(
     return None
 
 
-def extract_source(
-    source_dist: str,
-    incremental_repo_prefix: str
-) -> Optional[str]:
+def extract_source(source_dist: str, incremental_repo_prefix: str) -> Optional[str]:
     """Extracts source dist into given directory and creates py_library and filegroup targets.
 
     Returns:
         The Bazel label for the extracted wheel, in the form '//path/to/wheel'.
     """
+
     def _members(tf):
         for member in tf.getmembers():
             dir_components = member.path.split("/")
+            if len(dir_components) == 1:
+                yield member
             new_path = "/".join(dir_components[1:])
             if new_path.startswith("test"):
                 continue
@@ -426,7 +441,9 @@ def extract_source(
     if hasattr(result, "install_requires"):
         for r in result.install_requires:
             for d in pkg_resources.parse_requirements(r):
-                pkg_name = sanitised_repo_library_label(d.name, repo_prefix=incremental_repo_prefix)
+                pkg_name = sanitised_repo_library_label(
+                    d.name, repo_prefix=incremental_repo_prefix
+                )
                 deps.append(pkg_name)
     deps_str = ",".join(deps)
 
@@ -446,8 +463,7 @@ def extract_source(
             imports = [{imports}],
         )
         """.format(
-            imports=import_str,
-            deps=deps_str
+            imports=import_str, deps=deps_str
         )
     )
 
