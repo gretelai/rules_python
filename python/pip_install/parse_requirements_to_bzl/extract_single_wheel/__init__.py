@@ -71,7 +71,7 @@ def main() -> None:
             pass
 
     if not dist:
-        raise Exception("Could find dist for")
+        raise Exception(f"Could find dist for {name}")
 
     if dist.endswith(".whl"):
         bazel.extract_wheel(
