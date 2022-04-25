@@ -18,6 +18,9 @@ py_library(
     deps = [
         requirement("pkginfo"),
         requirement("setuptools"),
+        requirement("build"),
+        requirement("pep517"),
+        reqyurement("tomli"),
     ],
 )
 
