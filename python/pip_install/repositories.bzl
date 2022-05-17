@@ -34,21 +34,6 @@ _RULE_DEPS = [
         "https://files.pythonhosted.org/packages/65/63/39d04c74222770ed1589c0eaba06c05891801219272420b40311cd60c880/wheel-0.36.2-py2.py3-none-any.whl",
         "78b5b185f0e5763c26ca1e324373aadd49182ca90e825f7853f4b2509215dc0e",
     ),
-    (
-        "pypi__build",
-        "https://files.pythonhosted.org/packages/46/28/70768d6585162eb29df181aed4c1adb3081307ad46a892c390dab549dc13/build-0.7.0-py3-none-any.whl",
-        "21b7ebbd1b22499c4dac536abc7606696ea4d909fd755e00f09f3c0f2c05e3c8",
-    ),
-    (
-        "pypi__pep517",
-        "https://files.pythonhosted.org/packages/f4/67/846c08e18fefb265a66e6fd5a34269d649b779718d9bf59622085dabd370/pep517-0.12.0-py2.py3-none-any.whl",
-        "dd884c326898e2c6e11f9e0b64940606a93eb10ea022a2e067959f3a110cf161",
-    ),
-    (
-        "pypi__tomli",
-        "https://files.pythonhosted.org/packages/97/75/10a9ebee3fd790d20926a90a2547f0bf78f371b2f13aa822c759680ca7b9/tomli-2.0.1-py3-none-any.whl",
-        "939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc",
-    ),
 ]
 
 _GENERIC_WHEEL = """\
