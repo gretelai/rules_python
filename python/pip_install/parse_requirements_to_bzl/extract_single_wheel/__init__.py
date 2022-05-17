@@ -36,7 +36,7 @@ def main() -> None:
 
     pip_args.extend(["--no-deps"] + deserialized_args["extra_pip_args"])
 
-    requirement_file = NamedTemporaryFile(mode="wb", delete=False)
+    requirement_file = NamedTemporaryFile(mode='wb', delete=False)
     try:
         requirement_file.write(args.requirement.encode("utf-8"))
         requirement_file.flush()
@@ -80,14 +80,10 @@ def main() -> None:
             deserialized_args["pip_data_exclude"],
             args.enable_implicit_namespace_pkgs,
             incremental=True,
-            incremental_repo_prefix=bazel.whl_library_repo_prefix(args.repo),
+            incremental_repo_prefix=bazel.whl_library_repo_prefix(args.repo)
         )
     if dist.endswith(".tar.gz"):
         bazel.extract_source(
             dist,
-            extras,
-            deserialized_args["pip_data_exclude"],
-            args.enable_implicit_namespace_pkgs,
-            incremental=True,
-            incremental_repo_prefix=bazel.whl_library_repo_prefix(args.repo),
+            incremental_repo_prefix=bazel.whl_library_repo_prefix(args.repo)
         )
